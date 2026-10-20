@@ -3,17 +3,19 @@ import json
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-
-from users.forms import AvatarForm, LoginForm, RegisterForm
+from users.forms import LoginForm, ProfileForm, RegisterForm
 
 User = get_user_model()
-
 
 def user_to_dict(user):
     return {
         'id': user.id,
         'username': user.username,
         'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'patronymic': user.patronymic,
+        'bio': user.bio,
         'avatar': user.avatar.url if user.avatar else None,
         'is_staff': user.is_staff,
     }
@@ -93,7 +95,7 @@ def profile_view(request):
         return JsonResponse({'ok': False, 'errors': {'detail': ['Нужно войти']}}, status=401)
 
     if request.method == 'POST':
-        form = AvatarForm(request.POST, request.FILES, instance=request.user)
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if not form.is_valid():
             return errors_response(form)
         form.save()

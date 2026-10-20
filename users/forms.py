@@ -36,10 +36,10 @@ class RegisterForm(forms.Form):
         return cleaned
 
 
-class AvatarForm(forms.ModelForm):
+class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['avatar']
+        fields = ['first_name', 'last_name', 'patronymic', 'email', 'bio', 'avatar']
 
     def clean_avatar(self):
         avatar = self.cleaned_data.get('avatar')
