@@ -5,3 +5,6 @@ class PostsConfig(AppConfig):
     name = "content.posts"    
     label = "posts"           
     verbose_name = "Посты"
+
+    def ready(self):
+        from . import signals
