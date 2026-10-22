@@ -1,60 +1,88 @@
 from django.db import models
 from django.conf import settings
 
+class Tag(models.Model):
+    name = models.CharField(
+        'Название тега', 
+        max_length=50, 
+        unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
 class Post(models.Model):
     title = models.CharField(
-        verbose_name='Заголовок',
-        max_length=128,
-    )
+        'Заголовок', 
+        max_length=128
+        )
     text = models.TextField(
-        verbose_name='Текст',
-        max_length=1000,
-    )
-    photo = models.ImageField(
-        verbose_name='Фото_поста',
-        upload_to="posts/",
-        blank=True
-    )
+        'Текст', 
+        max_length=5000
+    ) 
     created = models.DateTimeField(
-        verbose_name='Дата создания',
+        'Дата создания', 
         auto_now_add=True
     )
     updated = models.DateTimeField(
-        verbose_name='Дата обновления',
+        'Дата обновления', 
         auto_now=True
     ) 
+    
     author = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        settings.AUTH_USER_MODEL, 
         verbose_name='Автор',
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE, 
         related_name='posts'
     )
-    likes = models.ManyToManyField(
-        to=settings.AUTH_USER_MODEL,
-        verbose_name='Лайки',
-        related_name='liked_posts',
-        blank=True,
+    
+    tags = models.ManyToManyField(
+        Tag, 
+        verbose_name='Теги', 
+        blank=True, 
+        related_name='posts'
     )
+    favorites = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, 
+        verbose_name='В избранном',
+        related_name='favorite_posts', 
+        blank=True
+    )
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, 
+        verbose_name='Лайки',
+        related_name='liked_posts', 
+        blank=True
+    )
+    photo = models.ImageField(
+        'Фото поста', 
+        upload_to='posts/', 
+        blank=True, 
+        null=True
+    )
+    
     likes_count = models.PositiveIntegerField(
-        "Лайков", 
-        default=0
+        'Лайков', 
+        default=0, 
+        editable=False
     )
     comments_count = models.PositiveIntegerField(
-        "Комментариев", 
-        default=0
+        'Комментариев', 
+        default=0, 
+        editable=False
     )
+    
     def __str__(self):
         return self.title
 
     class Meta:
         db_table = 'posts'
         ordering = ['-created']
-        verbose_name='Пост'
-        verbose_name_plural='Посты'
-        indexes = [
-            models.Index(fields=["-created"]),
-            models.Index(fields=["author", "-created"]),
-        ]
+        verbose_name = 'Пост'
+        verbose_name_plural = 'Посты'
 
 class Comment(models.Model):
     post = models.ForeignKey(
