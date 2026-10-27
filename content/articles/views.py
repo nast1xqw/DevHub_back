@@ -6,6 +6,27 @@ from .models import Article
 from users.decorators import login_required_json
 from content.videos.models import Video
 from content.posts.models import Tag
+import json
+from users.decorators import login_required_json, staff_required_json
+from .forms import ArticleForm
+
+@staff_required_json
+def create_article(request):
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        data = {}
+    form = ArticleForm(data)
+    if not form.is_valid():
+        errors = {f: list(m) for f, m in form.errors.items()}
+        return JsonResponse({'ok': False, 'errors': errors}, status=400)
+    article = form.save(commit=False)
+    article.author = request.user
+    article.save()
+    form.save_tags(article)
+    return JsonResponse({'ok': True, 'article': article_to_dict(article, request.user)}, status=201)
 
 
 def article_to_dict(article, user=None):
