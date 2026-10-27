@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-# Импортируем общий Tag из приложения постов
 from content.posts.models import Tag
 
 
