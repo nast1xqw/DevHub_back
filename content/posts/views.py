@@ -44,21 +44,41 @@ def errors_response(form):
     return JsonResponse({'ok': False, 'errors': errors}, status=400)
 
 
-@login_required_json  
+@login_required_json
 def create_post(request):
     if request.method != 'POST':
         return JsonResponse({'ok': False, 'detail': 'Метод не разрешен'}, status=405)
-
+    
     form = PostForm(get_data(request), request.FILES)
     if not form.is_valid():
         return errors_response(form)
-
+    
     post = form.save(commit=False)
-    post.author = request.user
-    post.save()
-    form.save_m2m() 
-    return JsonResponse({'ok': True, 'post': post_to_dict(post, request.user)}, status=201)
-
+    post.author = request.user 
+    post.save()  
+    
+    tags_input = form.cleaned_data.get('tags_input', '')
+    if tags_input:
+        from .models import Tag
+        tag_names = [name.strip() for name in tags_input.split(',') if name.strip()]
+        for name in tag_names:
+            tag, _ = Tag.objects.get_or_create(name=name)
+            post.tags.add(tag)
+    
+    return JsonResponse({'ok': True, 'post': post_to_dict(post, request.user)}, status=201)   
+@login_required_json
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, pk=post_id)
+    
+    if request.method != 'DELETE':
+        return JsonResponse({'ok': False, 'detail': 'Метод не разрешен'}, status=405)
+    
+    if post.author != request.user:
+        return JsonResponse({'ok': False, 'errors': {'detail': ['Только автор может удалить пост']}}, status=403)
+    
+    post.delete()
+    return JsonResponse({'ok': True})
+    
 def list_posts(request):
     posts = Post.objects.select_related('author').prefetch_related('tags').all()
     posts_data = [post_to_dict(post, request.user) for post in posts]
@@ -74,16 +94,21 @@ def toggle_like(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     if request.method != 'POST':
         return JsonResponse({'ok': False}, status=405)
-
+    
     if post.likes.filter(id=request.user.id).exists():
         post.likes.remove(request.user)
         is_liked = False
     else:
         post.likes.add(request.user)
         is_liked = True
-        
-    return JsonResponse({'ok': True, 'is_liked': is_liked, 'likes_count': post.likes_count})
-
+    
+    post.refresh_from_db()
+    
+    return JsonResponse({
+        'ok': True, 
+        'is_liked': is_liked, 
+        'likes_count': post.likes_count
+    })
 @login_required_json
 def toggle_favorite(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
