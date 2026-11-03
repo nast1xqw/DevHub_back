@@ -25,7 +25,6 @@ INSTALLED_APPS = [
     'users',
     'content.posts',
     'content.articles',
-    'content.videos',
 ]
 
 MIDDLEWARE = [
