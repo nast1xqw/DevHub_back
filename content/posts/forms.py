@@ -22,14 +22,15 @@ class PostForm(forms.ModelForm):
 
     def save(self, commit=True):
         post = super().save(commit=commit)
-        
-        tags_input = self.cleaned_data.get('tags_input', '')
-        if tags_input:
-            tag_names = [name.strip() for name in tags_input.split(',') if name.strip()]
-            for name in tag_names:
-                tag, created = Tag.objects.get_or_create(name=name)
-                post.tags.add(tag)
-                
+    
+        if commit:
+            tags_input = self.cleaned_data.get('tags_input', '')
+            if tags_input:
+                tag_names = [name.strip() for name in tags_input.split(',') if name.strip()]
+                for name in tag_names:
+                    tag, created = Tag.objects.get_or_create(name=name)
+                    post.tags.add(tag)
+    
         return post
 
 class CommentForm(forms.ModelForm):
