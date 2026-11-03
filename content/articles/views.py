@@ -27,7 +27,38 @@ def create_article(request):
     article.save()
     form.save_tags(article)
     return JsonResponse({'ok': True, 'article': article_to_dict(article, request.user)}, status=201)
+@staff_required_json
+def edit_article(request, article_id):
+    article = get_object_or_404(Article, pk=article_id)
+    
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        data = {}
+    
+    form = ArticleForm(data, instance=article)
+    if not form.is_valid():
+        errors = {f: list(m) for f, m in form.errors.items()}
+        return JsonResponse({'ok': False, 'errors': errors}, status=400)
+    
+    form.save()
+    form.save_tags(article)
+    
+    return JsonResponse({'ok': True, 'article': article_to_dict(article, request.user)})
 
+
+@staff_required_json
+def delete_article(request, article_id):
+    article = get_object_or_404(Article, pk=article_id)
+    
+    if request.method != 'DELETE':
+        return JsonResponse({'ok': False}, status=405)
+    
+    article.delete()
+    return JsonResponse({'ok': True})
 
 def article_to_dict(article, user=None):
     data = {
@@ -110,3 +141,9 @@ def get_recommendations(request):
         'articles': [article_to_dict(a, request.user) for a in rec_articles],
         'videos': [video_to_dict(v, request.user) for v in rec_videos]
     })
+
+@login_required_json
+def get_favorites(request):
+    favorite_articles = Article.objects.filter(favorites=request.user).order_by('-created')
+    data = [article_to_dict(article, request.user) for article in favorite_articles]
+    return JsonResponse({'ok': True, 'articles': data})
