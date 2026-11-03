@@ -9,5 +9,6 @@ urlpatterns = [
     path('<int:post_id>/favorite/', views.toggle_favorite, name='posts-favorite'),
     path('<int:post_id>/comments/', views.list_comments, name='comments-list'),
     path('<int:post_id>/comments/create/', views.create_comment, name='comments-create'),
+    path('<int:post_id>/delete/', views.delete_post, name='posts-delete'),  
     path('recommendations/', views.get_recommendations, name='posts-recommendations'),
 ]
