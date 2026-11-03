@@ -6,7 +6,6 @@ from content.posts.models import Tag
 
 User = get_user_model()
 
-# Разрешённые HTML-теги (безопасные)
 ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'img', 'h1', 'h2', 'h3', 'blockquote', 'code', 'pre']
 ALLOWED_ATTRIBUTES = {
     'a': ['href', 'title'],
@@ -14,10 +13,8 @@ ALLOWED_ATTRIBUTES = {
 }
 
 def clean_html(html_text):
-    """Очищает HTML от опасных тегов и скриптов"""
     if not html_text:
         return ''
-    # Удаляем все теги кроме разрешённых
     cleaned = bleach.clean(html_text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True)
     return cleaned
 
@@ -56,15 +53,13 @@ def parse_habr_rss():
     
     for entry in feed.entries[:10]:
         if not Article.objects.filter(source_url=entry.link).exists():
-            # Получаем HTML-контент
             html_content = entry.get('content', [{}])[0].get('value', '') or entry.get('summary', '')
             
-            # Очищаем HTML
             clean_text = clean_html(html_content)
             
             article = Article.objects.create(
                 title=entry.title,
-                text=clean_text,  # ← теперь чистый HTML
+                text=clean_text, 
                 source_url=entry.link,
                 author=admin
             )
