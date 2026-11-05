@@ -5,6 +5,7 @@ from .models import Article
 from users.decorators import login_required_json, staff_required_json
 from content.posts.models import Tag
 from .forms import ArticleForm
+from .parser import parse_habr_rss
 
 
 @staff_required_json
@@ -147,3 +148,21 @@ def get_recommendations(request):
         'ok': True,
         'articles': [article_to_dict(a, request.user) for a in rec_articles]
     })
+    
+@staff_required_json
+def parse_articles_api(request):
+    
+    count = parse_habr_rss()
+    
+    if count > 0:
+        return JsonResponse({
+            'ok': True, 
+            'message': f'Успешно добавлено статей: {count}',
+            'count': count
+        })
+    else:
+        return JsonResponse({
+            'ok': True, 
+            'message': 'Новые статьи не найдены или все уже добавлены',
+            'count': 0
+        })
