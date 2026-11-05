@@ -3,6 +3,7 @@ import bleach
 from django.contrib.auth import get_user_model
 from .models import Article
 from content.posts.models import Tag
+import re
 
 User = get_user_model()
 
@@ -12,17 +13,30 @@ ALLOWED_ATTRIBUTES = {
     'img': ['src', 'alt'],
 }
 
+
+
+
 def clean_html(html_text):
     if not html_text:
         return ''
+    
     cleaned = bleach.clean(html_text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True)
+    
+    cleaned = re.sub(r'\s*width="[^"]*"', '', cleaned)
+    cleaned = re.sub(r'\s*height="[^"]*"', '', cleaned)
+    cleaned = re.sub(r"\s*width='[^']*'", '', cleaned)
+    cleaned = re.sub(r"\s*height='[^']*'", '', cleaned)
+    
+    cleaned = re.sub(r'style="[^"]*width[^"]*"', '', cleaned)
+    cleaned = re.sub(r"style='[^']*width[^']*'", '', cleaned)
+    
     return cleaned
 
 def parse_habr_rss():
     urls = [
-        "https://habr.com/ru/hub/programming/rss/",
-        "https://habr.com/ru/rss/best/daily/",
         "https://habr.com/ru/rss/articles/",
+        "https://habr.com/ru/rss/best/daily/",
+        "https://habr.com/ru/rss/best/weekly/",
     ]
     
     feed = None
