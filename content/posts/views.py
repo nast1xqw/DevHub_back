@@ -176,3 +176,18 @@ def get_recommendations(request):
 
     posts_data = [post_to_dict(post, request.user) for post in recommended]
     return JsonResponse({'ok': True, 'posts': posts_data})
+
+@login_required_json
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, pk=post_id)
+    if request.method != 'DELETE':
+        return JsonResponse({'ok': False, 'detail': 'Метод не разрешен'}, status=405)
+    
+    if post.author_id != request.user.id and not request.user.is_staff:
+        return JsonResponse({
+            'ok': False, 
+            'errors': {'detail': ['Только автор или админ может удалить пост']}
+        }, status=403)
+    
+    post.delete()
+    return JsonResponse({'ok': True})
